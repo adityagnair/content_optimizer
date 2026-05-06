@@ -1,0 +1,371 @@
+Final PS
+📄  Problem Statement: Creator Content
+Posting Optimization System
+Overview
+Content creators publish content across platforms such as Instagram and
+YouTube to maximize audience reach and engagement.
+However, determining the optimal posting time and platform is a complex
+decision influenced by:
+Platform-specific audience activity patterns
+Content format (short-form vs long-form)
+Creator-specific engagement trends
+The objective of this problem is to design and implement a system that
+recommends:
+The best platform(s) to post content
+The optimal time slot for publishing
+Whether to post immediately or schedule
+The system must optimize for overall engagement while making effective
+platform and timing decisions under real-time constraints.
+System Description
+You are provided with a partially implemented backend system that simulates:
+Content submissions
+Platform activity trends
+Historical engagement data
+Each content item is represented as:
+Final PS
+1
+(content_id, creator_id, content_type, created_timestamp)
+Where:
+content_type ∈ {SHORT, LONG}
+SHORT →  short-form content
+LONG →  long-form content
+This acts as an input signal influencing engagement
+Platform Activity Data
+(platform, time_slot, activity_score)
+Represents the relative activity level of users on each platform across time
+slots.
+Historical Engagement Data
+(creator_id, platform, content_type, time_slot, avg_engagement)
+Represents historical performance patterns for creators.
+Functional Requirements
+1. Posting Time Recommendation
+For each content item, recommend an optimal time slot based on:
+Platform activity patterns
+Historical engagement data
+Content characteristics
+2. Platform Selection
+The system must determine:
+Final PS
+2
+Instagram
+YouTube
+Or both platforms
+3. Scheduling Decision
+For each content item:
+POST_NOW
+SCHEDULE
+4. Joint Optimization
+The system must jointly optimize:
+Platform selection
+Time slot selection
+The effectiveness of a solution depends on how well these two decisions are
+balanced.
+5. Creator Adaptation
+The system should account for creator-specific engagement patterns and
+platform-wise performance differences.
+These factors are implicitly reflected in the Engagement Score.
+Non-Functional Requirements
+The system should operate in near real-time
+Recommendations must be deterministic for identical inputs
+The system should efficiently handle bursts of content submissions
+Provided Components
+Participants will be given:
+A partially implemented backend service
+Database schema for content and engagement data
+Final PS
+3
+API endpoints:
+/submit_content
+/get_recommendation
+Platform activity dataset
+Historical engagement dataset
+Stub functions for recommendation logic
+Expected Output
+For each content item:
+(content_id, platform, time_slot, decision)
+Where:
+decision ∈ {POST_NOW, SCHEDULE}
+📊  Evaluation Criteria
+Submissions will be evaluated using a weighted scoring system based on the
+following metrics:
+1. Engagement Score (50%)
+Measures how well the recommended platform and time slot maximize
+expected engagement.
+This includes:
+Platform activity at the chosen time
+Historical engagement patterns
+Creator-specific performance
+2. Timing Effectiveness (20%)
+Evaluates the quality of the chosen time slot based on:
+Final PS
+4
+Platform activity levels
+Alignment with peak usage periods
+3. Platform Selection Quality (15%)
+Evaluates whether the chosen platform aligns with content characteristics:
+SHORT content generally performs better on Instagram
+LONG content generally performs better on YouTube
+This metric provides a light bias, not a strict constraint.
+4. Efficiency Score (15%)
+Measures:
+Time taken to generate recommendations
+Computational efficiency
+Scoring Methodology
+Each metric is computed independently and normalized.
+Final score is calculated as:
+Final Score =
+  0.50 × Engagement +
+  0.20 × Timing +
+  0.15 × Platform Quality +
+  0.15 × Efficiency
+A detailed breakdown of scores will be maintained for evaluation.
+Test Scenarios
+The system will be evaluated across multiple hidden scenarios, including:
+Burst content submissions
+Mixed SHORT and LONG content
+Creators with skewed engagement histories
+Conflicting platform and timing signals
+Final PS
+5
+Near-optimal vs sub-optimal time selections
+Constraints
+Platforms limited to Instagram and YouTube
+External APIs are not allowed
+Recommendations must be deterministic
+Notes
+Content type is an input signal, not a scoring metric
+Multiple valid approaches are expected
+Trade-offs between platform choice and timing are encouraged
+Both heuristic-based and scoring-based approaches are acceptable
+📦  1. Synthetic Dataset Generator 
+This generates:
+creators
+platform activity
+historical engagement
+content stream
+import pandas as pd
+import random
+random.seed(42)
+NUM_CREATORS = 50
+NUM_CONTENT = 1200
+creators = list(range(1, NUM_CREATORS + 1))
+platforms = ["Instagram", "YouTube"]
+content_types = ["SHORT", "LONG"]
+Final PS
+6
+time_slots = list(range(24))
+# ------------------------
+# Creators
+# ------------------------
+creators_df = pd.DataFrame({
+    "creator_id": creators,
+    "base_engagement": [round(random.uniform(0.6, 1.4), 2) 
+for _ in creators]
+})
+# ------------------------
+# Platform Activity
+# ------------------------
+activity_data = []
+for p in platforms:
+    for t in time_slots:
+        if p == "Instagram":
+            score = 0.4 + (0.6 if 18 <= t <= 22 else 0.2)
+        else:
+            score = 0.4 + (0.6 if 20 <= t <= 23 else 0.2)
+        activity_data.append([p, t, round(score, 2)])
+activity_df = pd.DataFrame(
+    activity_data, columns=["platform", "time_slot", "activ
+ity_score"]
+)
+# ------------------------
+# Historical Engagement
+# ------------------------
+hist_data = []
+for c in creators:
+    for p in platforms:
+        for ct in content_types:
+            for t in time_slots:
+Final PS
+7
+                base = random.uniform(0.3, 1.0)
+                # Content-type influence (hidden signal)
+                if (p == "Instagram" and ct == "SHORT") or 
+\
+                   (p == "YouTube" and ct == "LONG"):
+                    base *= 1.25
+                else:
+                    base *= 0.85
+                hist_data.append([
+                    c, p, ct, t, round(base, 3)
+                ])
+hist_df = pd.DataFrame(hist_data, columns=[
+    "creator_id", "platform", "content_type", "time_slot", 
+"avg_engagement"
+])
+# ------------------------
+# Content Stream
+# ------------------------
+content_data = []
+for i in range(NUM_CONTENT):
+    content_data.append([
+        i + 1,
+        random.choice(creators),
+        random.choice(content_types),
+        random.randint(0, 23)
+    ])
+content_df = pd.DataFrame(content_data, columns=[
+    "content_id", "creator_id", "content_type", "created_ti
+mestamp"
+])
+Final PS
+8
+# ------------------------
+# Save
+# ------------------------
+creators_df.to_csv("creators.csv", index=False)
+activity_df.to_csv("platform_activity.csv", index=False)
+hist_df.to_csv("historical_engagement.csv", index=False)
+content_df.to_csv("content.csv", index=False)
+print(" ✅  Dataset generated successfully")
+🧪  2. Scoring Script (Multi-Metric)
+This matches your final evaluation:
+Engagement →  50%
+Timing →  20%
+Platform quality →  15%
+Efficiency →  15%
+🔥  Key Features
+No double counting
+Creator adaptation naturally rewarded
+Platform bias is soft
+Timing is explicitly measured
+Deterministic scoring
+import pandas as pd
+import time
+# ------------------------
+# Load Data
+# ------------------------
+content = pd.read_csv("content.csv")
+activity = pd.read_csv("platform_activity.csv")
+Final PS
+9
+history = pd.read_csv("historical_engagement.csv")
+creators = pd.read_csv("creators.csv")
+# Team output
+submission = pd.read_csv("submission.csv")
+start_time = time.time()
+# ------------------------
+# Metrics accumulators
+# ------------------------
+engagement_total = 0
+timing_total = 0
+platform_score_total = 0
+# ------------------------
+# Iterate over submissions
+# ------------------------
+for _, row in submission.iterrows():
+    cid = row["content_id"]
+    platform = row["platform"]
+    time_slot = row["time_slot"]
+    c_row = content[content["content_id"] == cid].iloc[0]
+    creator_id = c_row["creator_id"]
+    content_type = c_row["content_type"]
+    # --- Activity ---
+    act = activity[
+        (activity["platform"] == platform) &
+        (activity["time_slot"] == time_slot)
+    ]["activity_score"].values[0]
+    # --- Historical ---
+    hist = history[
+        (history["creator_id"] == creator_id) &
+Final PS
+10
+        (history["platform"] == platform) &
+        (history["content_type"] == content_type) &
+        (history["time_slot"] == time_slot)
+    ]["avg_engagement"].values[0]
+    # --- Creator base ---
+    base = creators[
+        creators["creator_id"] == creator_id
+    ]["base_engagement"].values[0]
+    # ------------------------
+    # 1. Engagement
+    # ------------------------
+    engagement = base * act * hist
+    engagement_total += engagement
+    # ------------------------
+    # 2. Timing Score
+    # ------------------------
+    timing_total += act
+    # ------------------------
+    # 3. Platform Quality (soft)
+    # ------------------------
+    if content_type == "SHORT" and platform == "Instagram":
+        platform_score = 1.0
+    elif content_type == "LONG" and platform == "YouTube":
+        platform_score = 1.0
+    elif content_type == "SHORT" and platform == "YouTube":
+        platform_score = 0.85
+    else:  # LONG on Instagram (worst)
+        platform_score = 0.7
+    platform_score_total += platform_score
+# ------------------------
+# Efficiency
+# ------------------------
+Final PS
+11
+latency = time.time() - start_time
+efficiency_score = max(0, 1 - latency)  # normalized
+# ------------------------
+# Normalize Metrics
+# ------------------------
+n = len(submission)
+engagement_score = engagement_total / n
+timing_score = timing_total / n
+platform_score = platform_score_total / n
+# Optional normalization (safe scaling)
+engagement_score = min(engagement_score, 1.5) / 1.5
+# ------------------------
+# Final Score
+# ------------------------
+final_score = (
+    0.50 * engagement_score +
+    0.20 * timing_score +
+    0.15 * platform_score +
+    0.15 * efficiency_score
+)
+# ------------------------
+# Output
+# ------------------------
+print("\n--- SCORE BREAKDOWN ---")
+print("Engagement Score:", round(engagement_score, 4))
+print("Timing Score:", round(timing_score, 4))
+print("Platform Score:", round(platform_score, 4))
+print("Efficiency Score:", round(efficiency_score, 4))
+print("\n 🏆  Final Score:", round(final_score, 4))
+💡  Final Notes (Important for You)
+Final PS
+12
+This setup ensures:
+✅  What gets rewarded
+Good timing decisions
+Correct platform choice (softly)
+Creator-specific optimization
+Efficient logic
+❌  What gets punished
+Wrong platform bias
+Ignoring time patterns
+One-size-fits-all logic
+Slow systems
+🔥  Why this is strong
+Fully deterministic
+No ambiguity
+Hard to overfit
+Allows multiple solution strategies
+Matches your PS exactly
+If you want next, I can:
+Generate a sample submission.csv (baseline strategy)
+Or simulate best possible theoretical score so you know what top teams
+will hit
+Or give a starter backend repo  FastAPI   DB + ingestion pipeline)
+Final PS
+13
